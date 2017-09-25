@@ -11,6 +11,8 @@ import org.apache.hadoop.mapred.MapReduceBase;
 import org.apache.hadoop.mapred.OutputCollector;
 import org.apache.hadoop.mapred.Reporter;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
@@ -20,7 +22,7 @@ import com.hadoop.mapreduce.example.WordCount.TokenizerMapper;
 
 public class FarmersMarketRatings {
 	
-	public static class FarmersMarketRatingsMapper extends MapReduceBase implements org.apache.hadoop.mapred.Mapper<LongWritable, Text, Text, Text>
+	public static class FarmersMarketRatingsMapper extends Mapper<Object, Text, Text, Text>
 	{
 		private Text loc  = new Text();
 		private Text rating  = new Text();
@@ -59,7 +61,7 @@ public class FarmersMarketRatings {
 	}
 	
 	
-	public static class FarmersMarketRatingsReducer extends MapReduceBase implements org.apache.hadoop.mapred.Reducer<Text, Text, Text, Text>
+	public static class FarmersMarketRatingsReducer extends Reducer<Object, Text, Text, Text>
 	{
 
 		public void reduce(Text inKey, Iterator<Text> values, OutputCollector<Text, Text> output, Reporter reporter) throws IOException 
@@ -94,14 +96,18 @@ public class FarmersMarketRatings {
 
   public static void main(String[] args) throws Exception {
 	  
-	  Configuration conf = new Configuration();
+	  	Configuration conf = new Configuration();
 	    Job job = Job.getInstance(conf, "farmers market ratings");
-	    job.setJarByClass(WordCount.class);
-	    job.setMapperClass(TokenizerMapper.class);
-	    job.setCombinerClass(IntSumReducer.class);
-	    job.setReducerClass(IntSumReducer.class);
+	    job.setJarByClass(FarmersMarketRatings.class);
+	    job.setMapperClass(FarmersMarketRatingsMapper.class);
+	    job.setCombinerClass(FarmersMarketRatingsReducer.class);
+	    job.setReducerClass(FarmersMarketRatingsReducer.class);
 	    job.setOutputKeyClass(Text.class);
-	    job.setOutputValueClass(IntWritable.class);
+	    job.setOutputValueClass(Text.class);
+	    
+	    
+	    
+	    
 	    FileInputFormat.addInputPath(job, new Path("hdfs://127.0.0.1:9000/input/farmers_market_data.csv"));
 	    FileOutputFormat.setOutputPath(job, new Path("hdfs://127.0.0.1:9000/output/result_farmers_market_ratings"));
 	    System.exit(job.waitForCompletion(true) ? 0 : 1);
